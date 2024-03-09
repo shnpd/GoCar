@@ -1,0 +1,43 @@
+.lic-tmpl {
+    width: 600rpx;
+    height: 450rpx;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stretch {
+    width: 100%;
+    height: 100%;
+}
+
+.lic-tmpl-img {
+    opacity: 0.2;
+    position: absolute;
+}
+
+.cuIcon-camerafill {
+    font-size: 172rpx;
+}
+
+.instruction {
+    bottom: -74rpx;
+    position: absolute;
+}
+
+.lic-form {
+    width: 600rpx;
+}
+
+.cu-form-group .title {
+    min-width: calc(4em + 30rpx);
+}
+
+.check {
+    position: absolute;
+    height: 10%;
+    width: 10%;
+    right: 0rpx;
+    top: 0rpx;
+}

@@ -1,0 +1,61 @@
+const centPerSec = 0.7
+function formatDuration(sec: number): string {
+  const padString = (n: number) => {
+    return n < 10 ? '0' + n.toFixed(0) : n.toFixed(0)
+  }
+  let hour = Math.floor(sec / 3600)
+  sec = sec - hour * 3600
+  let min = Math.floor(sec / 60)
+  sec = sec - min * 60
+  return `${padString(hour)}:${padString(min)}:${padString(sec)}`
+}
+function formatFee(cents: number): string {
+  return (cents / 100).toFixed(2)
+}
+Page({
+  timer: undefined as number | undefined,
+  data: {
+    location: {
+      latitude: 32.92,
+      longitude: 114.32
+    },
+    elapsed: "00:00:00",
+    fee: "0.00"
+  },
+  onLoad(opt) {
+    console.log('current trip', opt.trip_id)
+    this.setupTimer()
+    // this.setupLocationUpdator()
+  },
+  onUnload() {
+    if (this.timer) {
+      clearInterval(this.timer)
+    }
+    // wx.stopLocationUpdate()
+  },
+  // setupLocationUpdator() {
+  //   wx.startLocationUpdate({
+  //     fail:console.error,
+  //   })
+  //   wx.onLocationChange((loc) => {
+  //     this.setData({
+  //       location: {
+  //         latitude: loc.latitude,
+  //         longitude: loc.longitude
+  //       },
+  //     })
+  //   })
+  // }
+  setupTimer() {
+    let elapsedSec = 0
+    let cents = 0
+    this.timer = setInterval(() => {
+      elapsedSec++
+      cents += centPerSec
+      this.setData({
+        elapsed: formatDuration(elapsedSec),
+        fee: formatFee(cents)
+      })
+    }, 1000)
+  }
+})

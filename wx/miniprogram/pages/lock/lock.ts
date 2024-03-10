@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing"
+
 const shareLocationKey = "share_location"
 
 Page({
@@ -5,8 +7,9 @@ Page({
     shareLocation: false,
     avatarURL: "",
   },
-  onLoad(opt) {
-    const car_id = opt.car_id
+  onLoad(opt: Record<'car_id', string>) {
+    const o: routing.lockOpts = opt
+    console.log(`unlocking car ${o.car_id}`)
     this.setData({
       shareLocation: wx.getStorageSync(shareLocationKey) || false,
     })
@@ -19,7 +22,7 @@ Page({
   onShareLocation(e: any) {
     const shareLocation: boolean = e.detail.value
     wx.setStorageSync(shareLocationKey, shareLocation)
-    getApp<IAppOption>().globalData.avatarURL=shareLocation?this.data.avatarURL:""
+    getApp<IAppOption>().globalData.avatarURL = shareLocation ? this.data.avatarURL : ""
   },
   onUnlockTap() {
     wx.getFuzzyLocation({
@@ -33,14 +36,16 @@ Page({
           //TODO：需要双向绑定，这里即使选择不展示头像仍然会展示头像
           avatarURL: this.data.shareLocation ? this.data.avatarURL : "",
         })
-        const tripID='trip456'
+        const tripID = 'trip456'
         wx.showLoading({
           title: "开锁中",
           mask: true
         })
         setTimeout(() => {
           wx.redirectTo({
-            url: `/pages/driving/driving?trip_id=${tripID}`,
+            url: routing.driving({
+              trip_id: tripID
+            }),
             complete: () => {
               wx.hideLoading()
             }

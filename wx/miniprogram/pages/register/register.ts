@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing"
+
 Page({
   redirectURL: "",
   data: {
@@ -9,9 +11,10 @@ Page({
     licNo: '',
     name: ''
   },
-  onLoad(opt) {
-    if (opt.redirect) {
-      this.redirectURL = decodeURIComponent(opt.redirect)
+  onLoad(opt: Record<'redirect', string>) {
+    const o: routing.registerOpts = opt
+    if (o.redirect) {
+      this.redirectURL = decodeURIComponent(o.redirect)
     }
   },
   onUploadLic() {

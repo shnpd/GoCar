@@ -9,6 +9,13 @@
       "list": [
         {
           "name": "",
+          "pathName": "pages/lock/lock",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "",
           "pathName": "pages/mytrips/mytrips",
           "query": "",
           "launchMode": "default",
@@ -24,13 +31,6 @@
         {
           "name": "",
           "pathName": "pages/index/index",
-          "query": "",
-          "launchMode": "default",
-          "scene": null
-        },
-        {
-          "name": "",
-          "pathName": "pages/lock/lock",
           "query": "",
           "launchMode": "default",
           "scene": null

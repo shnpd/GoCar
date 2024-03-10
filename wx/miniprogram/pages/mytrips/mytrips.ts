@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing"
+
 Page({
   data: {
     indicatorDots: true,
@@ -30,6 +32,14 @@ Page({
       },
     ]
   },
+  onShow() {
+    const avatar = getApp<IAppOption>().globalData.avatarURL
+    if (avatar) {
+      this.setData({
+        avatarURL: avatar
+      })
+    }
+  },
   onSwiperChange(e: any) {
     // console.log(e)
   },
@@ -38,7 +48,7 @@ Page({
   },
   onRegisterTap() {
     wx.navigateTo({
-      url: "/pages/register/register"
+      url: routing.register()
     })
   },
   onBindChooseAvatar(e: any) {

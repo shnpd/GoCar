@@ -1,3 +1,5 @@
+import { routing } from "../../utils/routing"
+
 // index.ts
 Page({
 
@@ -71,21 +73,24 @@ Page({
   },
 
   onShow() {
-    console.log("show")
-    this.isPageShowing = true
+    const avatar = getApp<IAppOption>().globalData.avatarURL
+    this.setData({ avatarURL: avatar })
   },
   onHide() {
-    console.log("hide")
-    this.isPageShowing = false
+
   },
   onScanTap() {
     wx.scanCode({
       success: () => {
         //TODO:get car id from scan result
         const carID = 'car123'
-        const redirectURL=`/pages/lock/lock?car_id=${carID}`
+        const redirectURL = routing.lock({
+          car_id: carID
+        })
         wx.navigateTo({
-          url: `/pages/register/register?redirect=${encodeURIComponent(redirectURL)}`
+          url: routing.register({
+            redirectURL: redirectURL
+          })
         })
       },
     })
@@ -119,7 +124,7 @@ Page({
   },
   onMyTripsTap() {
     wx.navigateTo({
-      url: "/pages/mytrips/mytrips"
+      url: routing.mytrips()
     })
   }
 })

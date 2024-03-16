@@ -7,3 +7,6 @@
     <cover-view>扫码租车</cover-view>
   </cover-view>
 </map>
+<modal showCancel="{{showCancel}}" showModal="{{showModal}}"
+ title="身份认证" contents="需要身份认证才能租车"
+ bindok="onModalOK"></modal>

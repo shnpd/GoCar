@@ -1,5 +1,6 @@
 {
   "usingComponents": {
+    "modal":"/components/modal/modal",
     "navigation-bar": "/components/navigation-bar/navigation-bar"
   }
 }

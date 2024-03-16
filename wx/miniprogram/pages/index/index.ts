@@ -44,7 +44,9 @@ Page({
         width: 50,
         height: 50
       },
-    ]
+    ],
+    showCancel: true,
+    showModal: false,
   },
   onLoad() {
     const avatar = getApp<IAppOption>().globalData.avatarURL
@@ -126,5 +128,9 @@ Page({
     wx.navigateTo({
       url: routing.mytrips()
     })
+  },
+  onModalOK() {
+    console.log('ok clicked')
   }
+
 })

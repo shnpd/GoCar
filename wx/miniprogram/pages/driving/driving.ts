@@ -60,5 +60,10 @@ Page({
         fee: formatFee(cents)
       })
     }, 1000)
+  },
+  onEndTripTap() {
+    wx.redirectTo({
+      url: routing.mytrips(),
+    })
   }
 })

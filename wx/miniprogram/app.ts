@@ -1,3 +1,5 @@
+import { IAppOption } from "./appoption"
+
 // app.ts
 App<IAppOption>({
   globalData: {},
@@ -5,9 +7,7 @@ App<IAppOption>({
     wx.request({
       url: 'http://localhost:8080/trip/trip123',
       method: 'GET',
-      success: res => {
-        const getTripResp = res.data
-      },
+      success: console.log,
       fail: console.error
     })
     // 登录

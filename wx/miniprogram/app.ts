@@ -1,4 +1,6 @@
+import camelcaseKeys from "camelcase-keys"
 import { IAppOption } from "./appoption"
+import { coolcar } from "./service/proto_gen/trip_pb"
 
 // app.ts
 App<IAppOption>({
@@ -7,7 +9,14 @@ App<IAppOption>({
     wx.request({
       url: 'http://localhost:8080/trip/trip123',
       method: 'GET',
-      success: console.log,
+      success: res => {
+        const getTripRes = coolcar.GetTripResponse.fromObject(
+          camelcaseKeys(res.data as object, {
+            deep: true
+          }))
+        console.log(getTripRes)
+        console.log('status is', coolcar.TripStatus[getTripRes.trip?.status!])
+      },
       fail: console.error
     })
     // 登录

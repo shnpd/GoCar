@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	authpb "coolcar/auth/api/gen/v1"
+	"coolcar/auth/dao"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -11,6 +12,7 @@ import (
 
 type Service struct {
 	OpenIdResolver OpenIdResolver
+	Mongo          *dao.Mongo
 	Logger         *zap.Logger
 }
 
@@ -23,7 +25,16 @@ func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.Lo
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "cannot resolve openid: %v", err)
 	}
+	accountID, err := s.Mongo.ResolveAccountID(c, openID)
+	if err != nil {
+		// 这个Login的报错是很外层的直接给用户看，不希望把err直接给用户，同时记日志
+		s.Logger.Error("cannot resolve account id", zap.Error(err))
+		return nil, status.Error(codes.Internal, "")
+	}
 
 	s.Logger.Info("received code", zap.String("code", req.Code))
-	return &authpb.LoginResponse{AccessToken: "token for openID: " + openID, ExpiresIn: 7200}, nil
+	return &authpb.LoginResponse{
+		AccessToken: "token for account id: " + accountID,
+		ExpiresIn:   7200,
+	}, nil
 }

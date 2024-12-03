@@ -23,6 +23,7 @@ type OpenIdResolver interface {
 func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
 	openID, err := s.OpenIdResolver.Resolve(req.Code)
 	if err != nil {
+		// 将err返回给用户
 		return nil, status.Errorf(codes.Unavailable, "cannot resolve openid: %v", err)
 	}
 	accountID, err := s.Mongo.ResolveAccountID(c, openID)

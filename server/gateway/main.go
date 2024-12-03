@@ -21,6 +21,7 @@ func main() {
 			OrigName:    true,
 		},
 	))
+	// 将 gRPC 服务注册到 HTTP 处理器上，使得 HTTP 请求可以被转发到 gRPC 服务。
 	err := authpb.RegisterAuthServiceHandlerFromEndpoint(
 		c,
 		mux,

@@ -1,5 +1,6 @@
 syntax = "proto3";
 package auth.v1;
+// 这里的coolcar是go.mod中的module
 option go_package = "coolcar/auth/api/gen/v1;authpb";
 
 message LoginRequest {

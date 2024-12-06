@@ -26,10 +26,12 @@ func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.Lo
 		// 将err返回给用户
 		return nil, status.Errorf(codes.Unavailable, "cannot resolve openid: %v", err)
 	}
+
+	// 通过openID查询accountID
 	accountID, err := s.Mongo.ResolveAccountID(c, openID)
 	if err != nil {
-		// 这个Login的报错是很外层的直接给用户看，不希望把err直接给用户，同时记日志
 		s.Logger.Error("cannot resolve account id", zap.Error(err))
+		// 这里返回的是一个内部错误，不希望把err直接给用户，因此只返回一个codes.Internal
 		return nil, status.Error(codes.Internal, "")
 	}
 

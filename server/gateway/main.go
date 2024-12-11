@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	authpb "coolcar/auth/api/gen/v1"
+	rentalpb "coolcar/rental/api/gen/v1"
 	"log"
 	"net/http"
 
@@ -23,13 +24,21 @@ func main() {
 	))
 	// 将 gRPC 服务注册到 HTTP 处理器上，使得 HTTP 请求可以被转发到 gRPC 服务。
 	err := authpb.RegisterAuthServiceHandlerFromEndpoint(
-		c,
-		mux,
-		"localhost:8081",
+		c, mux, "localhost:8081",
 		[]grpc.DialOption{grpc.WithInsecure()},
 	)
 	if err != nil {
 		log.Fatalf("cannot register auth service: %v", err)
 	}
+
+	err = rentalpb.RegisterTripServiceHandlerFromEndpoint(
+		c, mux, "localhost:8082",
+		[]grpc.DialOption{grpc.WithInsecure()},
+	)
+
+	if err != nil {
+		log.Fatalf("cannot register auth service: %v", err)
+	}
+
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

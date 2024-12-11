@@ -61,7 +61,7 @@ func (i *interceptor) HandlerRequest(ctx context.Context, req interface{}, info 
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "token not valid: %v", err)
 	}
-	return handler(ContextWithAccountID(ctx, aid), req)
+	return handler(ContextWithAccountID(ctx, AccountID(aid)), req)
 }
 
 func tokenFromContext(c context.Context) (string, error) {
@@ -85,16 +85,23 @@ func tokenFromContext(c context.Context) (string, error) {
 
 type accountIDKey struct{}
 
+// AccountID defines account id object.
+type AccountID string
+
+func (a AccountID) String() string {
+	return string(a)
+}
+
 // ContextWithAccountID creates a context with given account id
-func ContextWithAccountID(c context.Context, aid string) context.Context {
+func ContextWithAccountID(c context.Context, aid AccountID) context.Context {
 	return context.WithValue(c, accountIDKey{}, aid)
 }
 
 // AccountIDFromContext returns account id from context
 // Returns Unauthenticated error if no account id is available
-func AccountIDFromContext(c context.Context) (string, error) {
+func AccountIDFromContext(c context.Context) (AccountID, error) {
 	v := c.Value(accountIDKey{})
-	aid, ok := v.(string)
+	aid, ok := v.(AccountID)
 	if !ok {
 		return "", status.Error(codes.Unauthenticated, "")
 	}

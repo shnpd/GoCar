@@ -3,3 +3,6 @@
 node_modules
 miniprogram_npm
 *.md
+
+private.key
+public.key

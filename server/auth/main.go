@@ -7,9 +7,9 @@ import (
 	"coolcar/auth/dao"
 	"coolcar/auth/token"
 	"coolcar/auth/wechat"
+	"coolcar/shared/server"
 	"io"
 	"log"
-	"net"
 	"os"
 	"time"
 
@@ -21,14 +21,9 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewDevelopment()
+	logger, err := server.NewZapLogger()
 	if err != nil {
 		log.Fatalf("cannot create logger: %v", err)
-	}
-
-	lis, err := net.Listen("tcp", ":8081")
-	if err != nil {
-		logger.Fatal("cannot listen", zap.Error(err))
 	}
 
 	c := context.Background()
@@ -50,17 +45,21 @@ func main() {
 		logger.Fatal("cannot parse private key", zap.Error(err))
 	}
 
-	s := grpc.NewServer()
-	authpb.RegisterAuthServiceServer(s, &auth.Service{
+	logger.Sugar().Fatal(server.RunGRPCServer(&server.GRPCConfig{
+		Name:   "auth",
+		Addr:   ":8081",
 		Logger: logger,
-		Mongo:  dao.NewMongo(mongoClient.Database("coolcar")),
-		OpenIdResolver: &wechat.Service{
-			Appid:     "wxcf596336b6889e72",
-			AppSecret: "a452126e8aa608b1625571098c39358c",
+		ResigterFunc: func(s *grpc.Server) {
+			authpb.RegisterAuthServiceServer(s, &auth.Service{
+				Logger: logger,
+				Mongo:  dao.NewMongo(mongoClient.Database("coolcar")),
+				OpenIdResolver: &wechat.Service{
+					Appid:     "wxcf596336b6889e72",
+					AppSecret: "a452126e8aa608b1625571098c39358c",
+				},
+				TokenExpire:    2 * time.Hour,
+				TokenGenerator: token.NewJWTTokenGen("coolcar/auth", privKey),
+			})
 		},
-		TokenExpire:    2 * time.Hour,
-		TokenGenerator: token.NewJWTTokenGen("coolcar/auth", privKey),
-	})
-	err = s.Serve(lis)
-	logger.Fatal("cannot server", zap.Error(err))
+	}))
 }

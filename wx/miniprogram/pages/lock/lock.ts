@@ -38,10 +38,6 @@ Page({
           //TODO：需要双向绑定，这里即使选择不展示头像仍然会展示头像
           avatarURL: this.data.shareLocation ? this.data.avatarURL : "",
         })
-        TripService.CreateTrip({
-          start:'abc',
-        })
-        return
         const tripID = 'trip456'
         wx.showLoading({
           title: "开锁中",

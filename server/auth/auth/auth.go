@@ -42,7 +42,7 @@ func (s *Service) Login(c context.Context, req *authpb.LoginRequest) (*authpb.Lo
 		// 这里返回的是一个内部错误，不希望把err直接给用户，因此只返回一个codes.Internal
 		return nil, status.Error(codes.Internal, "")
 	}
-	tkn, err := s.TokenGenerator.GenerateToken(accountID, s.TokenExpire)
+	tkn, err := s.TokenGenerator.GenerateToken(accountID.String(), s.TokenExpire)
 	if err != nil {
 		s.Logger.Error("cannot generate token", zap.Error(err))
 		return nil, status.Error(codes.Internal, "")

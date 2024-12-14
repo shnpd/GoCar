@@ -1,22 +1,42 @@
-package mgo
+package mgutil
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const IDField = "_id"
+// Common field names.
+const (
+	IDFieldName        = "_id"
+	UpdatedAtFieldName = "updatedat"
+)
+
+// IDField defines the object id filed.
+type IDField struct {
+	ID primitive.ObjectID `bson:"_id"`
+}
+
+// UpdatedAtField defines the updatedat  field.
+type UpdatedAtField struct {
+	UpdateAt int64 `bson:"updatedat`
+}
+
+// NewObjectID returns a new object id.
+// 不直接使用primitive.NewObjectID是为了方便测试，测试时可以通过修改变量的值来固定的ObjectID
+var NewObjID = primitive.NewObjectID
+
+// UpdatedAt returns the current time in unix nano.
+var UpdatedAt = func() int64 {
+	return time.Now().UnixNano()
+}
 
 // Set returns a $set update document.
 func Set(v interface{}) bson.M {
 	return bson.M{
 		"$set": v,
 	}
-}
-
-// ObjID defines the object id filed.
-type ObjID struct {
-	ID primitive.ObjectID `bson:"_id"`
 }
 
 func SetOnInsert(v interface{}) bson.M {

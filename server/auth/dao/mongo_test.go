@@ -2,22 +2,20 @@ package dao
 
 import (
 	"context"
-	mgo "coolcar/shared/mongo"
+	"coolcar/shared/id"
+	mgutil "coolcar/shared/mongo"
+	"coolcar/shared/mongo/objid"
 	mongotesting "coolcar/shared/mongo/testing"
 	"os"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-var mongoURI string
 
 func TestResolveAccountID(t *testing.T) {
 	c := context.Background()
-	mc, err := mongo.Connect(c, options.Client().ApplyURI(mongoURI))
+	mc, err := mongotesting.NewDefaultClient(c)
 	if err != nil {
 		t.Fatalf("cannot connect mongodb: %v", err)
 	}
@@ -25,12 +23,12 @@ func TestResolveAccountID(t *testing.T) {
 	// 初始化插入两条数据以及对应的objectID
 	_, err = m.col.InsertMany(c, []interface{}{
 		bson.M{
-			mgo.IDField: mustObjID("674fe7b3f846790fba023980"),
-			openIDField: "openid_1",
+			mgutil.IDFieldName: objid.MustFromID(id.AccountID("674fe7b3f846790fba023980")),
+			openIDField:        "openid_1",
 		},
 		bson.M{
-			mgo.IDField: mustObjID("674fe7b3f846790fba023981"),
-			openIDField: "openid_2",
+			mgutil.IDFieldName: objid.MustFromID(id.AccountID("674fe7b3f846790fba023981")),
+			openIDField:        "openid_2",
 		},
 	})
 	if err != nil {
@@ -38,8 +36,8 @@ func TestResolveAccountID(t *testing.T) {
 	}
 
 	// 测试环境中每次都使用以下函数生成固定的ObjectID
-	m.newObjID = func() primitive.ObjectID {
-		return mustObjID("674fe7b3f846790fba023982")
+	mgutil.NewObjID = func() primitive.ObjectID {
+		return objid.MustFromID(id.AccountID("674fe7b3f846790fba023982"))
 	}
 
 	// 表格驱动测试，创建了3个测试用例，openid_1和openid_2是已经存在的用户希望resolve得到插入的objectid，openid_3是新用户希望得到固定函数生成的objectid
@@ -72,22 +70,14 @@ func TestResolveAccountID(t *testing.T) {
 			if err != nil {
 				t.Errorf("faild resolve account id for %q: %v", cc.openID, err)
 			}
-			if id != cc.want {
+			if id.String() != cc.want {
 				t.Errorf("resolve account id: want: %q, got:%q", cc.want, id)
 			}
 		})
 	}
 }
 
-func mustObjID(hex string) primitive.ObjectID {
-	objID, err := primitive.ObjectIDFromHex(hex)
-	if err != nil {
-		panic(err)
-	}
-	return objID
-}
-
 // TestMain 用于测试前的初始化
 func TestMain(m *testing.M) {
-	os.Exit(mongotesting.RunWithMongoInDocker(m, &mongoURI))
+	os.Exit(mongotesting.RunWithMongoInDocker(m))
 }

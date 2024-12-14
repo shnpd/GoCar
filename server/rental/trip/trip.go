@@ -16,7 +16,7 @@ type Service struct {
 }
 
 // CreateTrip creates a trip
-func (s *Service) CreateTrip(c context.Context, req *rentalpb.CreateTripRequest) (*rentalpb.CreateTripResponse, error) {
+func (s *Service) CreateTrip(c context.Context, req *rentalpb.CreateTripRequest) (*rentalpb.TripEntity, error) {
 	// 这里的c已经是经过auth.Interceptor处理过的
 	aid, err := auth.AccountIDFromContext(c)
 	if err != nil {

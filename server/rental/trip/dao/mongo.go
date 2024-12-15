@@ -15,6 +15,7 @@ import (
 const (
 	tripField      = "trip"
 	accountIDField = tripField + ".accountid"
+	statusField    = tripField + ".status"
 )
 
 // Mongo defines a mongo dao.
@@ -36,14 +37,12 @@ type TripRecode struct {
 	Trip                  *rentalpb.Trip  `bson:"trip"`
 }
 
-// TODO：表格驱动测试
-
 func (m *Mongo) CreateTrip(c context.Context, trip *rentalpb.Trip) (*TripRecode, error) {
 	r := &TripRecode{
 		Trip: trip,
 	}
 	r.ID = mgutil.NewObjID()
-	r.UpdateAt = mgutil.UpdatedAt()
+	r.UpdatedAt = mgutil.UpdatedAt()
 
 	_, err := m.col.InsertOne(c, r)
 	if err != nil {
@@ -73,4 +72,55 @@ func (m *Mongo) GetTrip(c context.Context, id id.TripID, accountID id.AccountID)
 		return nil, fmt.Errorf("cannot decode: %v", err)
 	}
 	return &tr, nil
+}
+
+// GetTrips get trips for the account by status.
+// If status is not specified, get all trips for the account.
+func (m *Mongo) GetTrips(c context.Context, accountID id.AccountID, status rentalpb.TripStatus) ([]*TripRecode, error) {
+	filter := bson.M{
+		accountIDField: accountID.String(),
+	}
+	if status != rentalpb.TripStatus_TS_NOT_SPECIFIED {
+		filter[statusField] = status
+	}
+
+	res, err := m.col.Find(c, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var trips []*TripRecode
+	for res.Next(c) {
+		var trip TripRecode
+		err := res.Decode(&trip)
+		if err != nil {
+			return nil, err
+		}
+		trips = append(trips, &trip)
+	}
+	return trips, nil
+}
+
+// UpdateTrip updates a trip.
+func (m *Mongo) UpdateTrip(c context.Context, tid id.TripID, aid id.AccountID, updatedAt int64, trip *rentalpb.Trip) error {
+	objID, err := objid.FromID(tid)
+	if err != nil {
+		return fmt.Errorf("invalid id: %v", err)
+	}
+	newUpdatedAt := mgutil.UpdatedAt()
+	res, err := m.col.UpdateOne(c, bson.M{
+		mgutil.IDFieldName:        objID,
+		accountIDField:            aid.String(),
+		mgutil.UpdatedAtFieldName: updatedAt,
+	}, mgutil.Set(bson.M{
+		tripField:                 trip,
+		mgutil.UpdatedAtFieldName: newUpdatedAt,
+	}))
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
 }

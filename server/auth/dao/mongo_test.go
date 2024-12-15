@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestResolveAccountID(t *testing.T) {
@@ -36,9 +35,7 @@ func TestResolveAccountID(t *testing.T) {
 	}
 
 	// 测试环境中每次都使用以下函数生成固定的ObjectID
-	mgutil.NewObjID = func() primitive.ObjectID {
-		return objid.MustFromID(id.AccountID("674fe7b3f846790fba023982"))
-	}
+	mgutil.NewObjIDWithValue(id.AccountID("674fe7b3f846790fba023982"))
 
 	// 表格驱动测试，创建了3个测试用例，openid_1和openid_2是已经存在的用户希望resolve得到插入的objectid，openid_3是新用户希望得到固定函数生成的objectid
 	cases := []struct {

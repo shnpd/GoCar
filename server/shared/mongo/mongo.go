@@ -1,6 +1,8 @@
 package mgutil
 
 import (
+	"coolcar/shared/mongo/objid"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,12 +22,18 @@ type IDField struct {
 
 // UpdatedAtField defines the updatedat  field.
 type UpdatedAtField struct {
-	UpdateAt int64 `bson:"updatedat`
+	UpdatedAt int64 `bson:"updatedat`
 }
 
 // NewObjectID returns a new object id.
 // 不直接使用primitive.NewObjectID是为了方便测试，测试时可以通过修改变量的值来固定的ObjectID
 var NewObjID = primitive.NewObjectID
+
+func NewObjIDWithValue(id fmt.Stringer) {
+	NewObjID = func() primitive.ObjectID {
+		return objid.MustFromID(id)
+	}
+}
 
 // UpdatedAt returns the current time in unix nano.
 var UpdatedAt = func() int64 {

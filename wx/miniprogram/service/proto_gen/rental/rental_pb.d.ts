@@ -66,6 +66,9 @@ export namespace rental {
 
             /** LocationStatus poiName */
             poiName?: (string|null);
+
+            /** LocationStatus timestampSec */
+            timestampSec?: (number|null);
         }
 
         /** Represents a LocationStatus. */
@@ -88,6 +91,9 @@ export namespace rental {
 
             /** LocationStatus poiName. */
             public poiName: string;
+
+            /** LocationStatus timestampSec. */
+            public timestampSec: number;
 
             /**
              * Creates a LocationStatus message from a plain object. Also converts values to their respective internal types.
@@ -185,6 +191,9 @@ export namespace rental {
 
             /** Trip status */
             status?: (rental.v1.TripStatus|null);
+
+            /** Trip identityId */
+            identityId?: (string|null);
         }
 
         /** Represents a Trip. */
@@ -214,6 +223,9 @@ export namespace rental {
             /** Trip status. */
             public status: rental.v1.TripStatus;
 
+            /** Trip identityId. */
+            public identityId: string;
+
             /**
              * Creates a Trip message from a plain object. Also converts values to their respective internal types.
              * @param object Plain object
@@ -240,7 +252,7 @@ export namespace rental {
         interface ICreateTripRequest {
 
             /** CreateTripRequest start */
-            start?: (rental.v1.ILocationStatus|null);
+            start?: (rental.v1.ILocation|null);
 
             /** CreateTripRequest carId */
             carId?: (string|null);
@@ -256,7 +268,7 @@ export namespace rental {
             constructor(properties?: rental.v1.ICreateTripRequest);
 
             /** CreateTripRequest start. */
-            public start?: (rental.v1.ILocationStatus|null);
+            public start?: (rental.v1.ILocation|null);
 
             /** CreateTripRequest carId. */
             public carId: string;

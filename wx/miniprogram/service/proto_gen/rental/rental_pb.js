@@ -131,6 +131,7 @@ export const rental = $root.rental = (() => {
              * @property {number|null} [feeCent] LocationStatus feeCent
              * @property {number|null} [kmDriven] LocationStatus kmDriven
              * @property {string|null} [poiName] LocationStatus poiName
+             * @property {number|null} [timestampSec] LocationStatus timestampSec
              */
 
             /**
@@ -181,6 +182,14 @@ export const rental = $root.rental = (() => {
             LocationStatus.prototype.poiName = "";
 
             /**
+             * LocationStatus timestampSec.
+             * @member {number} timestampSec
+             * @memberof rental.v1.LocationStatus
+             * @instance
+             */
+            LocationStatus.prototype.timestampSec = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
              * Creates a LocationStatus message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
              * @memberof rental.v1.LocationStatus
@@ -203,6 +212,15 @@ export const rental = $root.rental = (() => {
                     message.kmDriven = Number(object.kmDriven);
                 if (object.poiName != null)
                     message.poiName = String(object.poiName);
+                if (object.timestampSec != null)
+                    if ($util.Long)
+                        (message.timestampSec = $util.Long.fromValue(object.timestampSec)).unsigned = false;
+                    else if (typeof object.timestampSec === "string")
+                        message.timestampSec = parseInt(object.timestampSec, 10);
+                    else if (typeof object.timestampSec === "number")
+                        message.timestampSec = object.timestampSec;
+                    else if (typeof object.timestampSec === "object")
+                        message.timestampSec = new $util.LongBits(object.timestampSec.low >>> 0, object.timestampSec.high >>> 0).toNumber();
                 return message;
             };
 
@@ -224,6 +242,11 @@ export const rental = $root.rental = (() => {
                     object.feeCent = 0;
                     object.kmDriven = 0;
                     object.poiName = "";
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.timestampSec = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                    } else
+                        object.timestampSec = options.longs === String ? "0" : 0;
                 }
                 if (message.location != null && message.hasOwnProperty("location"))
                     object.location = $root.rental.v1.Location.toObject(message.location, options);
@@ -233,6 +256,11 @@ export const rental = $root.rental = (() => {
                     object.kmDriven = options.json && !isFinite(message.kmDriven) ? String(message.kmDriven) : message.kmDriven;
                 if (message.poiName != null && message.hasOwnProperty("poiName"))
                     object.poiName = message.poiName;
+                if (message.timestampSec != null && message.hasOwnProperty("timestampSec"))
+                    if (typeof message.timestampSec === "number")
+                        object.timestampSec = options.longs === String ? String(message.timestampSec) : message.timestampSec;
+                    else
+                        object.timestampSec = options.longs === String ? $util.Long.prototype.toString.call(message.timestampSec) : options.longs === Number ? new $util.LongBits(message.timestampSec.low >>> 0, message.timestampSec.high >>> 0).toNumber() : message.timestampSec;
                 return object;
             };
 
@@ -379,6 +407,7 @@ export const rental = $root.rental = (() => {
              * @property {rental.v1.ILocationStatus|null} [current] Trip current
              * @property {rental.v1.ILocationStatus|null} [end] Trip end
              * @property {rental.v1.TripStatus|null} [status] Trip status
+             * @property {string|null} [identityId] Trip identityId
              */
 
             /**
@@ -445,6 +474,14 @@ export const rental = $root.rental = (() => {
             Trip.prototype.status = 0;
 
             /**
+             * Trip identityId.
+             * @member {string} identityId
+             * @memberof rental.v1.Trip
+             * @instance
+             */
+            Trip.prototype.identityId = "";
+
+            /**
              * Creates a Trip message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
              * @memberof rental.v1.Trip
@@ -489,6 +526,8 @@ export const rental = $root.rental = (() => {
                     message.status = 2;
                     break;
                 }
+                if (object.identityId != null)
+                    message.identityId = String(object.identityId);
                 return message;
             };
 
@@ -512,6 +551,7 @@ export const rental = $root.rental = (() => {
                     object.current = null;
                     object.end = null;
                     object.status = options.enums === String ? "TS_NOT_SPECIFIED" : 0;
+                    object.identityId = "";
                 }
                 if (message.accountId != null && message.hasOwnProperty("accountId"))
                     object.accountId = message.accountId;
@@ -525,6 +565,8 @@ export const rental = $root.rental = (() => {
                     object.end = $root.rental.v1.LocationStatus.toObject(message.end, options);
                 if (message.status != null && message.hasOwnProperty("status"))
                     object.status = options.enums === String ? $root.rental.v1.TripStatus[message.status] : message.status;
+                if (message.identityId != null && message.hasOwnProperty("identityId"))
+                    object.identityId = message.identityId;
                 return object;
             };
 
@@ -548,7 +590,7 @@ export const rental = $root.rental = (() => {
              * Properties of a CreateTripRequest.
              * @memberof rental.v1
              * @interface ICreateTripRequest
-             * @property {rental.v1.ILocationStatus|null} [start] CreateTripRequest start
+             * @property {rental.v1.ILocation|null} [start] CreateTripRequest start
              * @property {string|null} [carId] CreateTripRequest carId
              */
 
@@ -569,7 +611,7 @@ export const rental = $root.rental = (() => {
 
             /**
              * CreateTripRequest start.
-             * @member {rental.v1.ILocationStatus|null|undefined} start
+             * @member {rental.v1.ILocation|null|undefined} start
              * @memberof rental.v1.CreateTripRequest
              * @instance
              */
@@ -598,7 +640,7 @@ export const rental = $root.rental = (() => {
                 if (object.start != null) {
                     if (typeof object.start !== "object")
                         throw TypeError(".rental.v1.CreateTripRequest.start: object expected");
-                    message.start = $root.rental.v1.LocationStatus.fromObject(object.start);
+                    message.start = $root.rental.v1.Location.fromObject(object.start);
                 }
                 if (object.carId != null)
                     message.carId = String(object.carId);
@@ -623,7 +665,7 @@ export const rental = $root.rental = (() => {
                     object.carId = "";
                 }
                 if (message.start != null && message.hasOwnProperty("start"))
-                    object.start = $root.rental.v1.LocationStatus.toObject(message.start, options);
+                    object.start = $root.rental.v1.Location.toObject(message.start, options);
                 if (message.carId != null && message.hasOwnProperty("carId"))
                     object.carId = message.carId;
                 return object;

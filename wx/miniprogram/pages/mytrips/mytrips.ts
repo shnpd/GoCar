@@ -1,5 +1,8 @@
 import { IAppOption } from "../../appoption"
+import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
+import { rental } from "../../service/proto_gen/rental/rental_pb";
+
 
 interface Trip {
   id: string
@@ -75,7 +78,8 @@ Page({
     navSel: '',
     navScroll: '',
   },
-  onLoad() {
+  async onLoad() {
+    const res = await TripService.GetTrips(rental.v1.TripStatus.FINISHED)
     this.populateTrips()
   },
   onReady() {

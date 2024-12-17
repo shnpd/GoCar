@@ -10,9 +10,23 @@
     "miniprogram": {
       "list": [
         {
+          "name": "pages/mytrips/mytrips",
+          "pathName": "pages/mytrips/mytrips",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/driving/driving",
+          "pathName": "pages/driving/driving",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
           "name": "pages/lock/lock",
           "pathName": "pages/lock/lock",
-          "query": "",
+          "query": "car_id=demo_car",
           "launchMode": "default",
           "scene": null
         }

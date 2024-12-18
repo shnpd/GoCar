@@ -2,10 +2,12 @@ import { IAppOption } from "../../appoption"
 import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
 import { rental } from "../../service/proto_gen/rental/rental_pb";
+import { formatDuration, formatFee } from "../../utils/format";
 
 
 interface Trip {
   id: string
+  shortId: string
   start: string
   end: string
   duration: string
@@ -36,10 +38,19 @@ interface MainItemQueryResult {
   }
 }
 
+const tripStatusMap = new Map([
+  [rental.v1.TripStatus.IN_PROGRESS, '进行中'],
+  [rental.v1.TripStatus.FINISHED, '已完成'],
+])
+
 Page({
   scrollStates: {
     mainItems: [] as MainItemQueryResult[]
   },
+
+  layoutResolver: undefined as ((value: unknown) => void) | undefined,
+
+
   data: {
     indicatorDots: true,
     autoPlay: false,
@@ -78,9 +89,20 @@ Page({
     navSel: '',
     navScroll: '',
   },
-  async onLoad() {
-    const res = await TripService.GetTrips(rental.v1.TripStatus.FINISHED)
-    this.populateTrips()
+  onLoad() {
+    const layoutReady = new Promise((resolve) => {
+      this.layoutResolver = resolve
+    })
+
+    // 等待layoutReady执行结束，layoutReady等待layoutResolver调用（等待layoutResolver调用）
+    Promise.all([TripService.getTrips(), layoutReady]).then(([trips]) => {
+      this.populateTrips(trips.trips!)
+    })
+    getApp<IAppOption>().globalData.userInfo.then(userInfo => {
+      this.setData({
+        avatarURL: userInfo.avatarUrl,
+      })
+    })
   },
   onReady() {
     wx.createSelectorQuery().select('#heading')
@@ -89,44 +111,69 @@ Page({
         this.setData({
           tripsHeight: height,
           navCount: Math.round(height / 50)
+        }, () => {
+          if (this.layoutResolver) {
+            this.layoutResolver('')
+          }
         })
       }).exec()
   },
-  populateTrips() {
+  populateTrips(trips: rental.v1.ITripEntity[]) {
     const mainItems: MainItem[] = []
     const navItems: NavItem[] = []
     let navSel = ''
     let preNav = ''
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < trips.length; i++) {
+      const trip = trips[i]
       const mainId = 'main-' + i
       const navId = 'nav-' + i
-      const tripId = (10001 + i).toString()
+      const shortId = trip.id?.substr(trip.id.length - 6)
       if (!preNav) {
         preNav = navId
+      }
+      const tripData: Trip = {
+        id: trip.id!,
+        shortId: '****' + shortId,
+        start: trip.trip?.start?.poiName || '未知',
+        end: '',
+        distance: '',
+        duration: '',
+        fee: '',
+        status: tripStatusMap.get(trip.trip?.status!) || '未知',
+      }
+
+      const end = trip.trip?.end
+      if (end) {
+        tripData.end = end.poiName || '未知'
+        tripData.distance = end.kmDriven?.toFixed(1) + '公里'
+        tripData.fee = formatFee(end.feeCent || 0)
+        const dur = formatDuration((end.timestampSec || 0) - (trip.trip?.start?.timestampSec || 0))
+        tripData.duration = `${dur.hh}时${dur.mm}分`
       }
       mainItems.push({
         id: mainId,
         navId: navId,
         navScrollId: preNav,
-        data: {
-          id: tripId,
-          start: '东方明珠',
-          end: '迪士尼',
-          distance: '27.0公里',
-          duration: '0时47分',
-          fee: '128.00元',
-          status: '已完成'
-        }
+        data: tripData
       })
       navItems.push({
         id: navId,
         mainId: mainId,
-        label: tripId
+        label: shortId || '',
       })
       if (i === 0) {
         navSel = navId
       }
       preNav = navId
+    }
+
+    // display-multiple-items不能大于swiper-item数量，添加空白的swiper-item进行占位
+    for (let i = 0; i < this.data.navCount - 1; i++) {
+      navItems.push({
+        id: '',
+        mainId: '',
+        label: '',
+      })
     }
     this.setData({
       mainItems: mainItems,

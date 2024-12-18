@@ -1,22 +1,19 @@
+import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
+import { formatDuration, formatFee } from "../../utils/format"
 import { routing } from "../../utils/routing"
 
-const centPerSec = 0.7
-function formatDuration(sec: number): string {
-  const padString = (n: number) => {
-    return n < 10 ? '0' + n.toFixed(0) : n.toFixed(0)
-  }
-  let hour = Math.floor(sec / 3600)
-  sec = sec - hour * 3600
-  let min = Math.floor(sec / 60)
-  sec = sec - min * 60
-  return `${padString(hour)}:${padString(min)}:${padString(sec)}`
+const updateIntervalSec = 5
+
+
+function durationStr(sec:number){
+  const dur = formatDuration(sec)
+  return `${dur.hh}:${dur.mm}:${dur.ss}`
 }
-function formatFee(cents: number): string {
-  return (cents / 100).toFixed(2)
-}
+
 Page({
   timer: undefined as number | undefined,
+  tripID: "",
   data: {
     location: {
       latitude: 32.92,
@@ -27,11 +24,9 @@ Page({
   },
   onLoad(opt: Record<'trip_id', string>) {
     const o: routing.drivingOpts = opt
-    console.log('current trip', o.trip_id)
-    o.trip_id="67612a3189075d2ae73c9fd3"
-    TripService.GetTrip(o.trip_id).then(console.log)
-    this.setupTimer()
-    // this.setupLocationUpdator()
+    this.tripID = o.trip_id
+    this.setupLocationUpdator()
+    this.setupTimer(o.trip_id)
   },
   onUnload() {
     if (this.timer) {
@@ -39,34 +34,68 @@ Page({
     }
     // wx.stopLocationUpdate()
   },
-  // setupLocationUpdator() {
-  //   wx.startLocationUpdate({
-  //     fail:console.error,
-  //   })
-  //   wx.onLocationChange((loc) => {
-  //     this.setData({
-  //       location: {
-  //         latitude: loc.latitude,
-  //         longitude: loc.longitude
-  //       },
-  //     })
-  //   })
-  // }
-  setupTimer() {
-    let elapsedSec = 0
-    let cents = 0
-    this.timer = setInterval(() => {
-      elapsedSec++
-      cents += centPerSec
+  setupLocationUpdator() {
+    wx.startLocationUpdate({
+      fail: console.error,
+    })
+    wx.onLocationChange((loc) => {
       this.setData({
-        elapsed: formatDuration(elapsedSec),
-        fee: formatFee(cents)
+        location: {
+          latitude: loc.latitude,
+          longitude: loc.longitude
+        },
+      })
+    })
+  },
+  async setupTimer(tripID: string) {
+    // 初始更新
+    // 更新最新状态
+    const trip = await TripService.updateTripPos(tripID)
+    if(trip.status !== rental.v1.TripStatus.IN_PROGRESS){
+      console.error("trip is not in progress")
+      return
+    }
+    // 自从上次更新经过了多少秒
+    let secSinceLastUpdate = 0
+    // 上次更新时行程已经过了多少秒
+    let lastUpdateDurationSec = trip.current!.timestampSec! - trip.start!.timestampSec!
+    this.setData({
+      elapsed: durationStr(lastUpdateDurationSec),
+      fee: formatFee(trip.current!.feeCent!),
+    })
+
+
+    // 每5s更新一次
+    this.timer = setInterval(() => {
+      secSinceLastUpdate++
+      if (secSinceLastUpdate % 5 === 0) {
+        TripService.updateTripPos(tripID, {
+          latitude: this.data.location.latitude,
+          longitude: this.data.location.longitude,
+        }).then(trip => {
+          lastUpdateDurationSec = trip.current!.timestampSec! - trip.start!.timestampSec!
+          secSinceLastUpdate = 0
+          this.setData({
+            fee: formatFee(trip.current!.feeCent!),
+          })
+        }).catch(console.error)
+      }
+      this.setData({
+        elapsed: durationStr(lastUpdateDurationSec + secSinceLastUpdate),
       })
     }, 1000)
   },
   onEndTripTap() {
-    wx.redirectTo({
-      url: routing.mytrips(),
+    TripService.finishTrip(this.tripID).then(() => {
+      wx.redirectTo({
+        url: routing.mytrips(),
+      })
+    }).catch(err => {
+      console.error(err)
+      wx.showToast({
+        title: "结束行程失败",
+        icon: "none",
+      })
     })
   }
 })

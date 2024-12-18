@@ -151,8 +151,11 @@ func (s *Service) UpdateTrip(c context.Context, req *rentalpb.UpdateTripRequest)
 		return nil, status.Error(codes.NotFound, "")
 	}
 
-	// 业务计算
+	if tr.Trip.Status == rentalpb.TripStatus_FINISHED {
+		return nil, status.Error(codes.FailedPrecondition, "cannot update a finished trip")
+	}
 
+	// 业务计算
 	// 如果有新的位置信息，则更新当前位置，如果没有，则使用之前的位置
 	if tr.Trip.Current == nil {
 		s.Logger.Error("trip without current set", zap.String("id", tid.String()))

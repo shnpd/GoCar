@@ -1,4 +1,5 @@
 import { IAppOption } from "../../appoption"
+import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
 
@@ -43,14 +44,24 @@ Page({
           console.error("carID is empty")
           return
         }
-        const trip = await TripService.CreateTrip({
-          start:loc,
-          carId:this.carID,
-        })
-        if (!trip.id){
-          console.error("trip id is empty")
+        let trip:rental.v1.ITripEntity
+        try {
+          trip = await TripService.createTrip({
+            start:loc,
+            carId:this.carID,
+          })
+          if (!trip.id){
+            console.error("trip id is empty")
+            return
+          }
+        } catch(err) {
+          wx.showToast({
+            title:"创建行程失败",
+            icon:"none",
+          })
           return
         }
+
         wx.showLoading({
           title: "开锁中",
           mask: true
@@ -66,7 +77,7 @@ Page({
           })
         }, 2000);
       },
-      fail: res => {
+      fail: (res:any) => {
         console.log(res.errMsg)
         wx.showToast({
           icon: "none",

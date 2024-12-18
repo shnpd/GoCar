@@ -27,7 +27,7 @@
             <view class='cu-bar solid-bottom padding-right'>
                 <view class='action'>
                     <text class='cuIcon-title text-green'></text>
-                    {{item.data.id}}
+                    {{item.data.shortId}}
                 </view>
                 <view>{{item.data.status}}</view>
             </view>

@@ -1,4 +1,6 @@
 import { IAppOption } from "../../appoption"
+import { rental } from "../../service/proto_gen/rental/rental_pb"
+import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
 
 // index.ts
@@ -46,8 +48,6 @@ Page({
         height: 50
       },
     ],
-    showCancel: true,
-    showModal: false,
   },
   onLoad() {
     const avatar = getApp<IAppOption>().globalData.avatarURL
@@ -56,7 +56,7 @@ Page({
   onMylocationTap() {
     wx.getFuzzyLocation({
       type: 'gcj02',
-      success: res => {
+      success: (res:any) => {
         console.log(res.errMsg)
         this.setData({
           location: {
@@ -65,7 +65,7 @@ Page({
           },
         })
       },
-      fail: res => {
+      fail: (res:any) => {
         console.log(res.errMsg)
         wx.showToast({
           icon: "none",
@@ -82,9 +82,21 @@ Page({
   onHide() {
 
   },
-  onScanTap() {
+  async onScanTap() {
+    // 在有进行中的行程时不能扫码直接跳转到行程页面
+    const trips = await TripService.getTrips(rental.v1.TripStatus.IN_PROGRESS)
+    if (trips.trips?.length || 0 > 0) {
+      await this.selectComponent('#tripModal').showModal()
+      wx.navigateTo({
+        url: routing.driving({
+          trip_id: trips.trips![0].id!,
+        })
+      })
+      return
+    }
     wx.scanCode({
-      success: () => {
+      success: async () => {
+        await this.selectComponent('#licModal').showModal()
         //TODO:get car id from scan result
         const carID = 'car123'
         const redirectURL = routing.lock({
@@ -95,7 +107,7 @@ Page({
             redirectURL: redirectURL
           })
         })
-      },
+      }
     })
   },
   moveCars() {

@@ -23,6 +23,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/medivhzhan/weapp/v2 v2.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect

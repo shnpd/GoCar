@@ -1,42 +1,47 @@
-// components/modal/modal.ts
+import { ModalResult } from "./types"
+
 Component({
-
-  /**
-   * 组件的属性列表
-   */
-  properties: {
-    showModal: Boolean,
-    showCancel: Boolean,
-    title: String,
-    contents: String,
-  },
-  options: {
-    addGlobalClass: true,
-  },
-  /**
-   * 组件的初始数据
-   */
-  data: {
-
-  },
-
-  /**
-   * 组件的方法列表
-   */
-  methods: {
-    onCancel() {
-      this.hideModal('cancel')
+    properties: {
+        showModal: Boolean,
+        showCancel: Boolean,
+        title: String,
+        contents: String,
     },
-    onOK() {
-      console.log('111')
-      this.hideModal('ok')
+
+    options: {
+        addGlobalClass: true,
     },
-    hideModal(res: 'ok' | 'cancel' | 'close') {
-      this.setData({
-        showModal: false
-      })
-      // 通知页面
-      this.triggerEvent(res)
+
+    data: {
+        resolve: undefined as ((r: ModalResult) => void)|undefined,
+    },
+
+    methods: {
+        onCancel() {
+            this.hideModal('cancel')
+        },
+
+        onOK() {
+            this.hideModal('ok')
+        },
+
+        hideModal(res: ModalResult) {
+            this.setData({
+                showModal: false,
+            })
+            this.triggerEvent(res)
+            if (this.data.resolve) {
+                this.data.resolve(res)
+            }
+        },
+
+        showModal(): Promise<ModalResult> {
+            this.setData({
+                showModal: true,
+            })
+            return new Promise((resolve) => {
+                this.data.resolve = resolve
+            })
+        }
     }
-  }
 })

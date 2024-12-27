@@ -45,15 +45,14 @@ Page({
 					this.setData({
 						licImgURL: res.tempFiles[0].tempFilePath
 					})
-					//TODO: upload image,假设一秒后服务器返回了驾照数据
-					setTimeout(() => {
-						this.setData({
-							licNo: '123456',
-							name: 'ssss',
-							genderIndex: 1,
-							birthDate: '2000-01-01'
-						})
-					}, 1000)
+					const data = wx.getFileSystemManager().readFileSync(res.tempFiles[0].tempFilePath)
+					wx.request({
+						method:'PUT',
+						url:'https://coolcar-1311261643.cos.ap-nanjing.myqcloud.com/abc.jpg?q-sign-algorithm=sha1&q-ak=AKIDaBWbPxHK7dvxiCQ4SZQ0JL6anslEWaPz&q-sign-time=1735290500%3B1735294100&q-key-time=1735290500%3B1735294100&q-header-list=host&q-url-param-list=&q-signature=f46fee2ac5c141f1a02feb8aa08e138bfdf692e0',
+						data,
+						success:console.log,
+						fail:console.error,
+					})
 				}
 			}
 		})
@@ -80,7 +79,7 @@ Page({
 		})
 	},
 
-	onUnload(){
+	onUnload() {
 		this.clearProfileRefresher()
 	},
 

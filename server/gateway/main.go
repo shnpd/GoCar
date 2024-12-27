@@ -39,9 +39,14 @@ func main() {
 			registerFunc: authpb.RegisterAuthServiceHandlerFromEndpoint,
 		},
 		{
-			name:         "rental",
+			name:         "trip",
 			addr:         "localhost:8082",
 			registerFunc: rentalpb.RegisterTripServiceHandlerFromEndpoint,
+		},
+		{
+			name:         "profile",
+			addr:         "localhost:8082",
+			registerFunc: rentalpb.RegisterProfileServiceHandlerFromEndpoint,
 		},
 	}
 	// 将 gRPC 服务注册到 HTTP 处理器上，使得 HTTP 请求可以被转发到 gRPC 服务。

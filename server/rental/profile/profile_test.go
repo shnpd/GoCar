@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	blobpb "coolcar/blob/api/gen/v1"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile/dao"
 	"coolcar/shared/auth"
@@ -10,6 +11,8 @@ import (
 	"coolcar/shared/server"
 	"os"
 	"testing"
+
+	"google.golang.org/grpc"
 )
 
 func TestProfileLifecyle(t *testing.T) {
@@ -100,6 +103,80 @@ func TestProfileLifecyle(t *testing.T) {
 		}
 	}
 }
+
+func TestProfilePhotoLifecycle(t *testing.T) {
+	c := auth.ContextWithAccountID(context.Background(), id.AccountID("account1"))
+	s := newService(c, t)
+	// 创建一个测试用的client不去连接真实的blob service
+	s.BlobClient = &blobClient{
+		idForCreate: "blob1",
+	}
+	cases := []struct {
+		name    string
+		op      func() (string, error)
+		wantURL string
+	}{
+		{
+			name: "create_photo",
+			op: func() (string, error) {
+				r, err := s.CreateProfilePhoto(c, &rentalpb.CreateProfilePhotoRequest{})
+				if err != nil {
+					return "", err
+				}
+				return r.UploadUrl, nil
+			},
+			wantURL: "upload_url for blob1",
+		},
+		{
+			name: "complete_photo_upload",
+			op: func() (string, error) {
+				_, err := s.CompleteProfilePhoto(c, &rentalpb.CompleteProfilePhotoRequest{})
+				return "", err
+			},
+		},
+		{
+			name: "get_photo_url",
+			op: func() (string, error) {
+				r, err := s.GetProfilePhoto(c, &rentalpb.GetProfilePhotoRequest{})
+				if err != nil {
+					return "", err
+				}
+				return r.Url, nil
+			},
+			wantURL: "get_url for blob1",
+		},
+	}
+
+	for _, cc := range cases {
+		got, err := cc.op()
+		if err != nil {
+			t.Errorf("%s: operation failed: %v", cc.name, err)
+		}
+		if got != cc.wantURL {
+			t.Errorf("%s: url incorrect: want %q, got %q", cc.name, cc.wantURL, got)
+		}
+	}
+}
+
+type blobClient struct {
+	idForCreate string
+}
+
+func (b *blobClient) CreateBlob(ctx context.Context, in *blobpb.CreateBlobRequest, opts ...grpc.CallOption) (*blobpb.CreateBlobResponse, error) {
+	return &blobpb.CreateBlobResponse{
+		Id:        b.idForCreate,
+		UploadUrl: "upload_url for " + b.idForCreate,
+	}, nil
+}
+func (b *blobClient) GetBlob(ctx context.Context, in *blobpb.GetBlobRequest, opts ...grpc.CallOption) (*blobpb.GetBlobResponse, error) {
+	return &blobpb.GetBlobResponse{}, nil
+}
+func (b *blobClient) GetBlobURL(ctx context.Context, in *blobpb.GetBlobURLRequest, opts ...grpc.CallOption) (*blobpb.GetBlobURLResponse, error) {
+	return &blobpb.GetBlobURLResponse{
+		Url: "get_url for " + in.Id,
+	}, nil
+}
+
 func newService(c context.Context, t *testing.T) *Service {
 	mc, err := mongotesting.NewClient(c)
 	if err != nil {

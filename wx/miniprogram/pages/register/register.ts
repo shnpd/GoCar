@@ -1,5 +1,6 @@
 import { ProfileService } from "../../service/profile"
 import { rental } from "../../service/proto_gen/rental/rental_pb"
+import { Coolcar } from "../../service/request"
 import { padString } from "../../utils/format"
 import { routing } from "../../utils/routing"
 
@@ -23,12 +24,18 @@ Page({
 		name: ''
 	},
 	renderProfile(p: rental.v1.IProfile) {
+		this.renderIdentity(p.identity!)
 		this.setData({
-			licNo: p.identity?.licNumber || '',
-			name: p.identity?.name || '',
-			genderIndex: p.identity?.gender || 0,
-			birthDate: formatDate(p.identity?.birthDateMillis || 0),
 			state: rental.v1.IdentityStatus[p.identityStatus || 0],
+		})
+	},
+
+	renderIdentity(i?: rental.v1.IIdentity) {
+		this.setData({
+			licNo: i?.licNumber || '',
+			name: i?.name || '',
+			genderIndex: i?.gender || 0,
+			birthDate: formatDate(i?.birthDateMillis || 0),
 		})
 	},
 	onLoad(opt: Record<'redirect', string>) {
@@ -37,23 +44,34 @@ Page({
 			this.redirectURL = decodeURIComponent(o.redirect)
 		}
 		ProfileService.getProfile().then(p => this.renderProfile(p))
+		ProfileService.getProfilePhoto().then(p => {
+			this.setData({
+				licImgURL: p.url || '',
+			})
+		})
 	},
 	onUploadLic() {
 		wx.chooseMedia({
-			success: (res) => {
-				if (res.tempFiles.length > 0) {
-					this.setData({
-						licImgURL: res.tempFiles[0].tempFilePath
-					})
-					const data = wx.getFileSystemManager().readFileSync(res.tempFiles[0].tempFilePath)
-					wx.request({
-						method:'PUT',
-						url:'https://coolcar-1311261643.cos.ap-nanjing.myqcloud.com/account_1/676f88c84aea956a1e0ed05b?q-sign-algorithm=sha1&q-ak=AKIDaBWbPxHK7dvxiCQ4SZQ0JL6anslEWaPz&q-sign-time=1735362760%3B1735363760&q-key-time=1735362760%3B1735363760&q-header-list=host&q-url-param-list=&q-signature=36c40787d186b8e37a5e74ddc50b2aa52d5677ac',
-						data,
-						success:console.log,
-						fail:console.error,
-					})
+			success: async (res) => {
+				if (res.tempFiles.length === 0) {
+					return
 				}
+				this.setData({
+					licImgURL: res.tempFiles[0].tempFilePath
+				})
+				// 获取图片上传地址
+				const photoRes = await ProfileService.createProfilePhoto()
+				// 上传图片
+				if (!photoRes.uploadUrl) {
+					return
+				}
+				await Coolcar.uploadFile({
+					localPath: res.tempFiles[0].tempFilePath,
+					url: photoRes.uploadUrl,
+				})
+				// 上传之后获取图片identity
+				const identity = await ProfileService.completeProfilePhoto()
+				this.renderIdentity(identity)
 			}
 		})
 	},
@@ -104,6 +122,11 @@ Page({
 	},
 	onResubmit() {
 		ProfileService.clearProfile().then(p => this.renderProfile(p))
+		ProfileService.clearProfilePhoto().then(() => {
+			this.setData({
+				licImgURL: '',
+			})
+		})
 	},
 	//TODO: 服务器审查通过
 	onLicVerified() {

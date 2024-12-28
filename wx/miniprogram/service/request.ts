@@ -105,13 +105,36 @@ export namespace Coolcar {
             })
         })
     }
-}
 
-function wxLogin(): Promise<WechatMiniprogram.LoginSuccessCallbackResult> {
-    return new Promise((resolve, reject) => {
-        wx.login({
-            success: resolve,
-            fail: reject
+    function wxLogin(): Promise<WechatMiniprogram.LoginSuccessCallbackResult> {
+        return new Promise((resolve, reject) => {
+            wx.login({
+                success: resolve,
+                fail: reject
+            })
         })
-    })
+    }
+
+    export interface UploadFileOpts {
+        localPath: string
+        url: string
+    }
+    export function uploadFile(o: UploadFileOpts): Promise<void> {
+        const data = wx.getFileSystemManager().readFileSync(o.localPath)
+        return new Promise((resolve, reject) => {
+            wx.request({
+                method: 'PUT',
+                url: o.url,
+                data,
+                success: res => {
+                    if (res.statusCode >= 400) {
+                        reject(res)
+                    } else {
+                        resolve()
+                    }
+                },
+                fail: reject,
+            })
+        })
+    }
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	blobpb "coolcar/blob/api/gen/v1"
 	"coolcar/rental/ai"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile"
@@ -14,6 +15,7 @@ import (
 	coolenvpb "coolcar/shared/coolenv"
 	"coolcar/shared/server"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -39,9 +41,17 @@ func main() {
 
 	db := mongoClient.Database("coolcar")
 
+	blobConn, err := grpc.Dial("localhost:8083", grpc.WithInsecure())
+	if err != nil {
+		log.Fatal("cannot connect blob service", zap.Error(err))
+	}
+
 	profService := &profile.Service{
-		Mongo:  profiledao.NewMongo(db),
-		Logger: logger,
+		BlobClient:        blobpb.NewBlobServiceClient(blobConn),
+		PhotoGetExpire:    5 * time.Second,
+		PhotoUploadExpire: 10 * time.Second,
+		Mongo:             profiledao.NewMongo(db),
+		Logger:            logger,
 	}
 	logger.Sugar().Fatal(server.RunGRPCServer(&server.GRPCConfig{
 		Name:              "rental",

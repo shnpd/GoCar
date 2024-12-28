@@ -183,6 +183,20 @@ func (s *Service) CompleteProfilePhoto(c context.Context, req *rentalpb.Complete
 	}, nil
 }
 
+// ClearProfilePhoto clears profile photo for the current user
+func (s *Service) ClearProfilePhoto(c context.Context, req *rentalpb.ClearProfilePhotoRequest) (*rentalpb.ClearProfilePhotoResponse, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+	err = s.Mongo.UpdateProfilePhoto(c, aid, id.BlobID(""))
+	if err != nil {
+		s.Logger.Error("cannot clear profile photo", zap.Error(err))
+		return nil, status.Error(codes.Aborted, "")
+	}
+	return &rentalpb.ClearProfilePhotoResponse{}, nil
+}
+
 func (s *Service) logAndCovertProfileErr(err error) codes.Code {
 	if err == mongo.ErrNoDocuments {
 		return codes.NotFound

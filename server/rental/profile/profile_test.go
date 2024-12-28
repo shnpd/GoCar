@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestProfileLifecyle(t *testing.T) {
@@ -111,11 +113,26 @@ func TestProfilePhotoLifecycle(t *testing.T) {
 	s.BlobClient = &blobClient{
 		idForCreate: "blob1",
 	}
+
+	getPhotoOp := func() (string, error) {
+		r, err := s.GetProfilePhoto(c, &rentalpb.GetProfilePhotoRequest{})
+		if err != nil {
+			return "", err
+		}
+		return r.Url, nil
+	}
+
 	cases := []struct {
-		name    string
-		op      func() (string, error)
-		wantURL string
+		name        string
+		op          func() (string, error)
+		wantURL     string
+		wantErrCode codes.Code
 	}{
+		{
+			name:        "get_photo_before_upload",
+			op:          getPhotoOp,
+			wantErrCode: codes.NotFound,
+		},
 		{
 			name: "create_photo",
 			op: func() (string, error) {
@@ -135,22 +152,36 @@ func TestProfilePhotoLifecycle(t *testing.T) {
 			},
 		},
 		{
-			name: "get_photo_url",
-			op: func() (string, error) {
-				r, err := s.GetProfilePhoto(c, &rentalpb.GetProfilePhotoRequest{})
-				if err != nil {
-					return "", err
-				}
-				return r.Url, nil
-			},
+			name:    "get_photo_url",
+			op:      getPhotoOp,
 			wantURL: "get_url for blob1",
+		},
+		{
+			name: "clear_photo",
+			op: func() (string, error) {
+				_, err := s.ClearProfilePhoto(c, &rentalpb.ClearProfilePhotoRequest{})
+				return "", err
+			},
+		},
+		{
+			name:        "get_photo_after_clear",
+			op:          getPhotoOp,
+			wantErrCode: codes.NotFound,
 		},
 	}
 
 	for _, cc := range cases {
 		got, err := cc.op()
+		code := codes.OK
 		if err != nil {
-			t.Errorf("%s: operation failed: %v", cc.name, err)
+			if s, ok := status.FromError(err); ok {
+				code = s.Code()
+			} else {
+				t.Errorf("%s: opration failed: %v", cc.name, err)
+			}
+		}
+		if code != cc.wantErrCode {
+			t.Errorf("%s: wrong error code want %d, got %d", cc.name, cc.wantErrCode, code)
 		}
 		if got != cc.wantURL {
 			t.Errorf("%s: url incorrect: want %q, got %q", cc.name, cc.wantURL, got)

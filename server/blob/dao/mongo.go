@@ -27,6 +27,7 @@ type BlobRecord struct {
 	Path           string `bson:"path"`
 }
 
+// CreateBlob creates a blob.
 func (m *Mongo) CreateBlob(c context.Context, aid id.AccountID) (*BlobRecord, error) {
 	br := &BlobRecord{
 		AccountID: aid.String(),

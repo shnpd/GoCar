@@ -12,10 +12,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type Publisher interface {
+	Publish(context.Context, *carpb.CarEntity) error
+}
+
 // Service defines a car service.
 type Service struct {
-	Logger *zap.Logger
-	Mongo  *dao.Mongo
+	Logger    *zap.Logger
+	Mongo     *dao.Mongo
+	Publisher Publisher
 }
 
 // CreateCar creates a car.
@@ -58,7 +63,7 @@ func (s *Service) GetCars(c context.Context, req *carpb.GetCarsRequest) (*carpb.
 
 // LockCar signals a lock command to the specified car.
 func (s *Service) LockCar(c context.Context, req *carpb.LockCarRequest) (*carpb.LockCarResponse, error) {
-	_, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_UNLOCKED, &dao.CarUpdate{
+	car, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_UNLOCKED, &dao.CarUpdate{
 		Status: carpb.CarStatus_LOCKING,
 	})
 	if err != nil {
@@ -69,12 +74,13 @@ func (s *Service) LockCar(c context.Context, req *carpb.LockCarRequest) (*carpb.
 		return nil, status.Errorf(code, "cannot update: %v", err)
 	}
 
+	s.publish(c, car)
 	return &carpb.LockCarResponse{}, nil
 }
 
 // UnlockCar signals an unlock command to the specified car.
 func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*carpb.UnlockCarResponse, error) {
-	_, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_LOCKED, &dao.CarUpdate{
+	car, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_LOCKED, &dao.CarUpdate{
 		Status:       carpb.CarStatus_UNLOCKING,
 		Driver:       req.Driver,
 		UpdateTripID: true,
@@ -87,6 +93,7 @@ func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*ca
 		}
 		return nil, status.Errorf(code, "cannot update: %v", err)
 	}
+	s.publish(c, car)
 	return &carpb.UnlockCarResponse{}, nil
 }
 
@@ -103,9 +110,20 @@ func (s *Service) UpdateCar(c context.Context, req *carpb.UpdateCarRequest) (*ca
 		update.UpdateTripID = true
 		update.TripID = id.TripID("")
 	}
-	_, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_CS_NOT_SPECIFIED, update)
+	car, err := s.Mongo.UpdateCar(c, id.CarID(req.Id), carpb.CarStatus_CS_NOT_SPECIFIED, update)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	s.publish(c, car)
 	return &carpb.UpdateCarResponse{}, nil
+}
+
+func (s *Service) publish(c context.Context, car *dao.CarRecord) {
+	err := s.Publisher.Publish(c, &carpb.CarEntity{
+		Id:  car.ID.Hex(),
+		Car: car.Car,
+	})
+	if err != nil {
+		s.Logger.Warn("cannot publish car", zap.Error(err))
+	}
 }

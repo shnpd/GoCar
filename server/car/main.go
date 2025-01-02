@@ -6,6 +6,7 @@ import (
 	carpb "coolcar/car/api/gen/v1"
 	"coolcar/car/car"
 	"coolcar/car/dao"
+	"coolcar/car/sim"
 	"coolcar/shared/server"
 	"log"
 
@@ -33,11 +34,28 @@ func main() {
 	if err != nil {
 		logger.Fatal("cannot dial amqp", zap.Error(err))
 	}
-	pub, err := amqpclt.NewPublisher(amqpConn, "coolcar")
+	exchange := "coolcar"
+	pub, err := amqpclt.NewPublisher(amqpConn, exchange)
 	if err != nil {
 		logger.Fatal("cannot create publisher", zap.Error(err))
 	}
 
+	// Run car simulations.
+	carConn, err := grpc.Dial("localhost:8084", grpc.WithInsecure())
+	if err != nil {
+		logger.Fatal("cannot dial car service", zap.Error(err))
+	}
+
+	sub, err := amqpclt.NewSubscriber(amqpConn, exchange, logger)
+	if err != nil {
+		logger.Fatal("cannot create subscriber", zap.Error(err))
+	}
+	simController := &sim.Controller{
+		CarService: carpb.NewCarServiceClient(carConn),
+		Subscriber: sub,
+		Logger:     logger,
+	}
+	go simController.RunSimulations(context.Background())
 	logger.Sugar().Fatal(server.RunGRPCServer(&server.GRPCConfig{
 		Name:   "car",
 		Addr:   ":8084",

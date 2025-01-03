@@ -1,4 +1,5 @@
 import { IAppOption } from "../../appoption"
+import { CarService } from "../../service/car"
 import { ProfileService } from "../../service/profile"
 import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
@@ -8,6 +9,7 @@ import { routing } from "../../utils/routing"
 Page({
 
     isPageShowing: false,
+    socket: undefined as WechatMiniprogram.SocketTask | undefined,
     data: {
         avatarURL: "",
         setting: {
@@ -50,11 +52,19 @@ Page({
             },
         ],
     },
-    onLoad() {
-        const avatar = getApp<IAppOption>().globalData.avatarURL
-        this.setData({ avatarURL: avatar })
+    async onLoad() {
+        // 创建websocket连接
+        let msgReceived = 0
+        this.socket = CarService.subscribe((msg) => {
+            msgReceived++
+            console.log(msg)
+        })
+
+        const userInfo = await getApp<IAppOption>().globalData.userInfo
+        this.setData({ avatarURL: userInfo.avatarUrl })
     },
     onMyLocationTap() {
+        this.socket?.close({})
         wx.getFuzzyLocation({
             type: 'gcj02',
             success: (res: any) => {
@@ -76,9 +86,9 @@ Page({
         })
     },
 
-    onShow() {
-        const avatar = getApp<IAppOption>().globalData.avatarURL
-        this.setData({ avatarURL: avatar })
+    async onShow() {
+        const userInfo = await getApp<IAppOption>().globalData.userInfo
+        this.setData({ avatarURL: userInfo.avatarUrl })
     },
     onHide() {
 
@@ -97,7 +107,7 @@ Page({
         }
         wx.scanCode({
             success: async () => {
-                const carID = 'car123'
+                const carID = '67777ebee36cf4e0e6779394'
                 const lockURL = routing.lock({
                     car_id: carID
                 })

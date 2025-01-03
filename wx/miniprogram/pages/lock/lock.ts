@@ -1,4 +1,6 @@
 import { IAppOption } from "../../appoption"
+import { CarService } from "../../service/car"
+import { car } from "../../service/proto_gen/car/car_pb"
 import { rental } from "../../service/proto_gen/rental/rental_pb"
 import { TripService } from "../../service/trip"
 import { routing } from "../../utils/routing"
@@ -6,7 +8,8 @@ import { routing } from "../../utils/routing"
 const shareLocationKey = "share_location"
 
 Page({
-  carID:"",
+  carID: "",
+  carRefresher: 0,
   data: {
     shareLocation: false,
     avatarURL: "",
@@ -24,40 +27,32 @@ Page({
     this.setData({ avatarURL: avatar, shareLocation: true })
   },
   onShareLocation(e: any) {
-    const shareLocation: boolean = e.detail.value
-    wx.setStorageSync(shareLocationKey, shareLocation)
-    getApp<IAppOption>().globalData.avatarURL = shareLocation ? this.data.avatarURL : ""
+    this.data.shareLocation = e.detail.value
+    wx.setStorageSync(shareLocationKey, this.data.shareLocation)
   },
   onUnlockTap() {
     wx.getFuzzyLocation({
       type: "gcj02",
       success: async loc => {
-        console.log('starting a trip', {
-          location: {
-            latitude: loc.latitude,
-            longitude: loc.longitude
-          },
-          //TODO：需要双向绑定，这里即使选择不展示头像仍然会展示头像
-          avatarURL: this.data.shareLocation ? this.data.avatarURL : "",
-        })
         if (!this.carID) {
           console.error("carID is empty")
           return
         }
-        let trip:rental.v1.ITripEntity
+        let trip: rental.v1.ITripEntity
         try {
           trip = await TripService.createTrip({
-            start:loc,
-            carId:this.carID,
+            start: loc,
+            carId: this.carID,
+            avatarUrl: this.data.shareLocation ? this.data.avatarURL : "",
           })
-          if (!trip.id){
+          if (!trip.id) {
             console.error("trip id is empty")
             return
           }
-        } catch(err) {
+        } catch (err) {
           wx.showToast({
-            title:"创建行程失败",
-            icon:"none",
+            title: "创建行程失败",
+            icon: "none",
           })
           return
         }
@@ -66,18 +61,24 @@ Page({
           title: "开锁中",
           mask: true
         })
-        setTimeout(() => {
-          wx.redirectTo({
-            url: routing.driving({
-              trip_id: trip.id,
-            }),
-            complete: () => {
-              wx.hideLoading()
-            }
-          })
-        }, 2000);
+
+        // 轮询汽车状态，如果开锁成功则跳转到驾驶页
+        this.carRefresher = setInterval(async () => {
+          const c = await CarService.getCar(this.carID)
+          if (c.status === car.v1.CarStatus.UNLOCKED) {
+            this.clearCarRefresher()
+            wx.redirectTo({
+              url: routing.driving({
+                trip_id: trip.id!,
+              }),
+              complete: () => {
+                wx.hideLoading()
+              }
+            })
+          }
+        }, 2000)
       },
-      fail: (res:any) => {
+      fail: (res: any) => {
         console.log(res.errMsg)
         wx.showToast({
           icon: "none",
@@ -85,5 +86,17 @@ Page({
         })
       }
     })
-  }
+  },
+
+  onUnload(){
+    this.clearCarRefresher()
+    wx.hideLoading()
+  },
+  clearCarRefresher() {
+    if (this.carRefresher){
+      clearInterval(this.carRefresher)
+      this.carRefresher = 0
+    }
+  },
+
 })

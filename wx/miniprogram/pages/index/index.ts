@@ -97,7 +97,7 @@ Page({
         }
         wx.scanCode({
             success: async () => {
-                const carID = 'car123'
+                const carID = '67777ebee36cf4e0e6779394'
                 const lockURL = routing.lock({
                     car_id: carID
                 })

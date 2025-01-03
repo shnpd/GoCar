@@ -78,7 +78,6 @@ func (c *Controller) SimulateCar(ctx context.Context, initial *carpb.CarEntity, 
 				c.Logger.Error("cannot unlock car", zap.Error(err))
 			}
 		} else if update.Status == carpb.CarStatus_LOCKING {
-			// 硬件开锁过程，假设开锁成功
 			_, err := c.CarService.UpdateCar(ctx, &carpb.UpdateCarRequest{
 				Id:     carID,
 				Status: carpb.CarStatus_LOCKED,

@@ -47,9 +47,8 @@ Page({
         scale: 10,
         markers: [] as Marker[],
     },
-    async onLoad() {
-        const userInfo = await getApp<IAppOption>().globalData.userInfo
-        this.setData({ avatarURL: userInfo.avatarUrl })
+    onLoad() {
+
     },
     onMyLocationTap() {
         wx.getFuzzyLocation({
@@ -73,12 +72,17 @@ Page({
         })
     },
 
-    onShow() {
+    async onShow() {
+        const avatarUrl = await getApp<IAppOption>().globalData.avatarURL
+        this.setData({
+            avatarURL: avatarUrl,
+        })
+
         this.isPageShowing = true;
         if (!this.socket) {
             this.setData({
-                markers:[]
-            },()=>{
+                markers: []
+            }, () => {
                 this.setupCarPosUpdater()
             })
         }
@@ -87,7 +91,7 @@ Page({
         this.isPageShowing = false;
         if (this.socket) {
             this.socket.close({
-                success:()=>{
+                success: () => {
                     this.socket = undefined
                 }
             })
@@ -135,7 +139,7 @@ Page({
         let translationInProgress = false
         const endTransLation = () => { translationInProgress = false }
         this.socket = CarService.subscribe(car => {
-            if (!car.id || translationInProgress||!this.isPageShowing) {
+            if (!car.id || translationInProgress || !this.isPageShowing) {
                 console.log('skip')
                 return
             }

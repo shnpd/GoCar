@@ -5,6 +5,7 @@ import (
 	"coolcar/car/mq/amqpclt"
 	coolenvpb "coolcar/shared/coolenv"
 	"coolcar/shared/server"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -85,7 +86,12 @@ func main() {
 			shouldStop = true
 			break
 		case msg := <-ch:
-			fmt.Printf("Received a message: %s\n", msg.Body)
+			var update coolenvpb.CarPosUpdate
+			err = json.Unmarshal(msg.Body, &update)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("%+v\n", &update)
 		}
 		if shouldStop {
 			break

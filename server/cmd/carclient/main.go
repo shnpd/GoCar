@@ -16,13 +16,13 @@ func main() {
 	cs := carpb.NewCarServiceClient(conn)
 	c := context.Background()
 	// 创建5辆车
-	// for i := 0; i < 5; i++ {
-	// 	res, err := cs.CreateCar(c, &carpb.CreateCarRequest{})
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	fmt.Printf("created car: %s\n", res.Id)
-	// }
+	for i := 0; i < 5; i++ {
+		res, err := cs.CreateCar(c, &carpb.CreateCarRequest{})
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("created car: %s\n", res.Id)
+	}
 
 	// Reset all cars
 	res, err := cs.GetCars(c, &carpb.GetCarsRequest{})

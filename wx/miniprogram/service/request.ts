@@ -80,6 +80,7 @@ export namespace Coolcar {
                     return
                 }
             }
+            header['Grpc-Metadata-impersonate-account-id']="bad_account"
 
             wx.request({
                 url: serverAddr + o.path,

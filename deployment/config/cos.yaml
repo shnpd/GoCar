@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cos
+type: Opaque
+# 替换为腾讯云cos的url、secid和seckey
+stringData:
+  url: <url>
+  secid: <secid>
+  seckey: <seckey>

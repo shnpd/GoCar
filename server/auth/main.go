@@ -8,10 +8,13 @@ import (
 	"coolcar/auth/token"
 	"coolcar/auth/wechat"
 	"coolcar/shared/server"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"time"
+
+	"github.com/namsral/flag"
 
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,19 +23,27 @@ import (
 	"google.golang.org/grpc"
 )
 
+var addr = flag.String("addr", ":8081", "address to listen")
+var mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017/coolcar", "mongodb uri")
+var privateKeyFile = flag.String("private_key_file", "private.key", "private key file")
+var wechatAppID = flag.String("wechat_app_id", "<APPID>", "wechat app id")
+var wechatAppSecret = flag.String("wechat_app_secret", "<APPSECRET>", "wechat app secret")
+
 func main() {
+	flag.Parse()
+	fmt.Println("mongoURI:", *mongoURI)
 	logger, err := server.NewZapLogger()
 	if err != nil {
 		log.Fatalf("cannot create logger: %v", err)
 	}
 
 	c := context.Background()
-	mongoClient, err := mongo.Connect(c, options.Client().ApplyURI("mongodb://localhost:27017/coolcar"))
+	mongoClient, err := mongo.Connect(c, options.Client().ApplyURI(*mongoURI))
 	if err != nil {
 		logger.Fatal("cannot connect mongodb", zap.Error(err))
 	}
 	// 从文件读取私钥
-	pkFile, err := os.Open("private.key")
+	pkFile, err := os.Open(*privateKeyFile)
 	if err != nil {
 		logger.Fatal("cannot open private key", zap.Error(err))
 	}
@@ -47,15 +58,15 @@ func main() {
 
 	logger.Sugar().Fatal(server.RunGRPCServer(&server.GRPCConfig{
 		Name:   "auth",
-		Addr:   ":8081",
+		Addr:   *addr,
 		Logger: logger,
 		ResigterFunc: func(s *grpc.Server) {
 			authpb.RegisterAuthServiceServer(s, &auth.Service{
 				Logger: logger,
 				Mongo:  dao.NewMongo(mongoClient.Database("coolcar")),
 				OpenIdResolver: &wechat.Service{
-					Appid:     "wxcf596336b6889e72",
-					AppSecret: "a452126e8aa608b1625571098c39358c",
+					Appid:     *wechatAppID,
+					AppSecret: *wechatAppSecret,
 				},
 				TokenExpire:    2 * time.Hour,
 				TokenGenerator: token.NewJWTTokenGen("coolcar/auth", privKey),

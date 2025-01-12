@@ -6,6 +6,8 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // ServerConfig defines a server configuration
@@ -38,7 +40,8 @@ func RunGRPCServer(c *GRPCConfig) error {
 
 	// 注册服务比较复杂每个服务以及注册的方法都不同，所以将这部分提取出一个函数，参数只有s，函数由调用者传入
 	c.ResigterFunc(s)
-
+	// 注册grpc_health的服务
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
 	c.Logger.Info("grpc server started", nameFiled, zap.String("addr", c.Addr))
 	return s.Serve(lis)
 }

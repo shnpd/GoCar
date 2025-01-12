@@ -11,14 +11,24 @@ import (
 	"net/http"
 	"net/textproto"
 
+	"github.com/namsral/flag"
+
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 )
 
+var addr = flag.String("addr", ":8080", "address to listen")
+var authAddr = flag.String("auth_addr", "localhost:8081", "address for auth service")
+var tripAddr = flag.String("trip_addr", "localhost:8082", "address for trip service")
+var profileAddr = flag.String("profile_addr", "localhost:8082", "address for profile service")
+var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
+
 func main() {
+	flag.Parse()
+
 	lg, err := server.NewZapLogger()
 	if err != nil {
-		log.Fatal("cannot create logger: %v", err)
+		log.Fatalf("cannot create logger: %v", err)
 	}
 	c := context.Background()
 	c, cancel := context.WithCancel(c)
@@ -43,22 +53,22 @@ func main() {
 	}{
 		{
 			name:         "auth",
-			addr:         "localhost:8081",
+			addr:         *authAddr,
 			registerFunc: authpb.RegisterAuthServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "trip",
-			addr:         "localhost:8082",
+			addr:         *tripAddr,
 			registerFunc: rentalpb.RegisterTripServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "profile",
-			addr:         "localhost:8082",
+			addr:         *profileAddr,
 			registerFunc: rentalpb.RegisterProfileServiceHandlerFromEndpoint,
 		},
 		{
 			name:         "car",
-			addr:         "localhost:8084",
+			addr:         *carAddr,
 			registerFunc: carpb.RegisterCarServiceHandlerFromEndpoint,
 		},
 	}
@@ -69,7 +79,10 @@ func main() {
 			lg.Sugar().Fatalf("cannot register service %s: %v", s.name, err)
 		}
 	}
-	addr := ":8080"
-	lg.Sugar().Infof("grpc gateway started at %s", addr)
-	lg.Sugar().Fatal(http.ListenAndServe(addr, mux))
+	http.HandleFunc("/healthz", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write([]byte("ok"))
+	})
+	http.Handle("/", mux)
+	lg.Sugar().Infof("grpc gateway started at %s", *addr)
+	lg.Sugar().Fatal(http.ListenAndServe(*addr, nil))
 }

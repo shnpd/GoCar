@@ -8,7 +8,6 @@ import (
 	"coolcar/auth/token"
 	"coolcar/auth/wechat"
 	"coolcar/shared/server"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -31,7 +30,6 @@ var wechatAppSecret = flag.String("wechat_app_secret", "<APPSECRET>", "wechat ap
 
 func main() {
 	flag.Parse()
-	fmt.Println("mongoURI:", *mongoURI)
 	logger, err := server.NewZapLogger()
 	if err != nil {
 		log.Fatalf("cannot create logger: %v", err)
@@ -68,7 +66,7 @@ func main() {
 					Appid:     *wechatAppID,
 					AppSecret: *wechatAppSecret,
 				},
-				TokenExpire:    2 * time.Hour,
+				TokenExpire:    time.Hour,
 				TokenGenerator: token.NewJWTTokenGen("coolcar/auth", privKey),
 			})
 		},

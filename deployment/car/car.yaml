@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: car
+        version: v20250107
     spec:
       containers:
         - name: car
@@ -67,4 +68,4 @@ spec:
     - name: http
       protocol: TCP
       port: 8080
-  type: LoadBalancer
+  type: ClusterIP

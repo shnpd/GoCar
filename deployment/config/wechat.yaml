@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wechat
+type: Opaque
+# 替换为小程序的appid和secret
+stringData:
+  appid: <appid>
+  appsecret: <secret>

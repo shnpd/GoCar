@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth
+type: Opaque
+# 替换为rsa密钥对
+stringData:
+  privatekey: |
+   <privatekey>
+  publickey: |
+    <publickey>
+

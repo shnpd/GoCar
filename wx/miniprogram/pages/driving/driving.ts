@@ -50,7 +50,7 @@ Page({
   async setupTimer(tripID: string) {
     // 初始更新
     // 更新最新状态
-    const trip = await TripService.updateTripPos(tripID)
+    const trip = await TripService.getTrip(tripID)
     if(trip.status !== rental.v1.TripStatus.IN_PROGRESS){
       console.error("trip is not in progress")
       return
@@ -69,10 +69,7 @@ Page({
     this.timer = setInterval(() => {
       secSinceLastUpdate++
       if (secSinceLastUpdate % 5 === 0) {
-        TripService.updateTripPos(tripID, {
-          latitude: this.data.location.latitude,
-          longitude: this.data.location.longitude,
-        }).then(trip => {
+        TripService.getTrip(tripID).then(trip => {
           lastUpdateDurationSec = trip.current!.timestampSec! - trip.start!.timestampSec!
           secSinceLastUpdate = 0
           this.setData({

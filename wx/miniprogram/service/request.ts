@@ -2,8 +2,8 @@ import camelcaseKeys from "camelcase-keys"
 import { auth } from "./proto_gen/auth/auth_pb"
 
 export namespace Coolcar {
-    export const serverAddr = 'http://localhost:8080'
-    export const wsAddr = 'ws://localhost:9090'
+    export const serverAddr = 'http://localhost'
+    export const wsAddr = 'ws://localhost'
     const AUTH_ERR = 'AUTH_ERR'
 
     const authData = {
@@ -80,6 +80,7 @@ export namespace Coolcar {
                     return
                 }
             }
+            header['Grpc-Metadata-impersonate-account-id']="bad_account"
 
             wx.request({
                 url: serverAddr + o.path,

@@ -1,6 +1,7 @@
 export interface IAppOption {
-    globalData: {
-      userInfo: Promise<WechatMiniprogram.UserInfo>
-    }
-    userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback,
+  globalData: {
+    avatarURL: string
+    userInfo: Promise<WechatMiniprogram.UserInfo>
   }
+  resolveUserInfo(userInfo: WechatMiniprogram.UserInfo): void
+}

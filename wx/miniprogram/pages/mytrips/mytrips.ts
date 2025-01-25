@@ -222,7 +222,7 @@ Page({
     },
     onBindChooseAvatar(e: any) {
         const avatar = e.detail.avatarUrl
-        getApp<IAppOption>().globalData.uavatarURL = avatar
+        getApp<IAppOption>().globalData.avatarURL = avatar
         this.setData({ avatarURL: avatar, shareLocation: true })
     },
     onNavItemTap(e: any) {

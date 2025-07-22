@@ -7,9 +7,11 @@ import (
 	"coolcar/shared/auth"
 	"coolcar/shared/id"
 	"coolcar/shared/mongo/objid"
+	"fmt"
 	"math/rand"
 	"time"
 
+	"github.com/go-redsync/redsync/v4"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,6 +25,7 @@ type Service struct {
 	DistanceCalc   DistanceCalc
 	Mongo          *dao.Mongo
 	Logger         *zap.Logger
+	RedisLock      *redsync.Redsync
 }
 
 // ProfileManager defines the ACL(Anti Corruption Layer) for profile verification logic.
@@ -148,6 +151,13 @@ func (s *Service) UpdateTrip(c context.Context, req *rentalpb.UpdateTripRequest)
 
 	// 获取trip
 	tid := id.TripID(req.Id)
+	// 获取分布式锁key
+	lockKey := fmt.Sprintf("lock:trip:%s", tid.String())
+	mutex := s.RedisLock.NewMutex(lockKey)
+	if err = mutex.Lock(); err != nil {
+		return nil, status.Error(codes.Internal, "获取redis分布式锁异常")
+	}
+
 	tr, err := s.Mongo.GetTrip(c, tid, aid)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "")
@@ -172,17 +182,21 @@ func (s *Service) UpdateTrip(c context.Context, req *rentalpb.UpdateTripRequest)
 	if req.EndTrip {
 		tr.Trip.End = tr.Trip.Current
 		tr.Trip.Status = rentalpb.TripStatus_FINISHED
-		err := s.CarManager.Lock(c, id.CarID(tr.Trip.CarId))
+		err = s.CarManager.Lock(c, id.CarID(tr.Trip.CarId))
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "cannot lock car: %v", err)
 		}
 	}
 
 	// 更新trip
-	err = s.Mongo.UpdateTrip(c, tid, aid, tr.UpdatedAt, tr.Trip)
+	err = s.Mongo.UpdateTrip(c, tid, aid, tr.Trip)
 	if err != nil {
 		return nil, status.Error(codes.Aborted, "")
 	}
+	if ok, err := mutex.Unlock(); !ok || err != nil {
+		return nil, status.Errorf(codes.Internal, "释放redis分布式锁异常")
+	}
+
 	return tr.Trip, nil
 }
 

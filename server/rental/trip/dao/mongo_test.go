@@ -299,7 +299,7 @@ func TestUpdateTrip(t *testing.T) {
 
 	for _, cc := range cases {
 		now = cc.now
-		err := m.UpdateTrip(c, tid, aid, cc.withUpdatedAt, update)
+		err := m.UpdateTrip(c, tid, aid, update)
 		if cc.wantErr {
 			if err == nil {
 				t.Errorf("%s: expect error, but got nil", cc.name)

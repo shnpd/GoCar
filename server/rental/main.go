@@ -15,6 +15,9 @@ import (
 	tripdao "coolcar/rental/trip/dao"
 	coolenvpb "coolcar/shared/coolenv"
 	"coolcar/shared/server"
+	goredislib "github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"log"
 	"time"
 
@@ -32,6 +35,7 @@ var blobAddr = flag.String("blob_addr", "localhost:8083", "address for blob serv
 var aiAddr = flag.String("ai_addr", "localhost:18001", "address for ai service")
 var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
 var authPublicKeyFile = flag.String("auth_public_key_file", "../shared/auth/public.key", "public key file for auth")
+var redisAddr = flag.String("redis_addr", "localhost:6379", "address for redis")
 
 func main() {
 	flag.Parse()
@@ -89,6 +93,9 @@ func main() {
 				},
 				Mongo:  tripdao.NewMongo(db),
 				Logger: logger,
+				RedisLock: redsync.New(goredis.NewPool(goredislib.NewClient(&goredislib.Options{
+					Addr: *redisAddr,
+				}))),
 			})
 			rentalpb.RegisterProfileServiceServer(s, profService)
 		},

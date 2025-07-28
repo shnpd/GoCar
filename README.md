@@ -4,7 +4,7 @@
 
 ## 系统架构
 
-![](https://cdn.jsdelivr.net/gh/shnpd/blog-pic@main/javastudy/%E9%82%BB%E8%BD%A6%E5%87%BA%E8%A1%8C%E6%9E%B6%E6%9E%84%E5%9B%BE2.png)
+![](https://cdn.jsdelivr.net/gh/shnpd/blog-pic@main/250728/%E9%82%BB%E8%BD%A6%E5%87%BA%E8%A1%8C%E6%9E%B6%E6%9E%84%E5%9B%BE3.png)
 
 认证服务（auth）：
 - 接受小程序登录请求，验证用户身份，生成JWT令牌。

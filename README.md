@@ -3,9 +3,7 @@
 技术栈：gRPC、ProtoBuf、MongoDB、对象存储、JWT、RabbitMQ、Redis、Docker、k8s
 
 ## 系统架构
-
-![](https://cdn.jsdelivr.net/gh/shnpd/blog-pic@main/javastudy/%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
-
+![](https://cdn.jsdelivr.net/gh/shnpd/blog-pic@main/javastudy/%E9%82%BB%E8%BD%A6%E5%87%BA%E8%A1%8C%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
 认证服务（auth）：
 - 接受小程序登录请求，验证用户身份，生成JWT令牌。
 

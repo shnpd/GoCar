@@ -1,5 +1,5 @@
 # 邻车出行
-邻车出行租车小程序，前端采用wxml+typescript实现，后端基于go的微服务架构实现，包括登录服务、汽车服务、租赁服务，对象存储服务。
+邻车出行扫码租车小程序，前端采用wxml+typescript实现，后端基于go的微服务架构实现，包括登录服务、汽车服务、租赁服务，对象存储服务。
 技术栈：gRPC、ProtoBuf、MongoDB、对象存储、JWT、RabbitMQ、Redis、Docker、k8s
 
 ## 系统架构
